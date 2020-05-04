@@ -45,7 +45,8 @@ class LDAModeling:
     def __init__(self):
         self.shortest_num_cut = 2
         self.longest_num_cut = 100
-        self.no_top_terms = 20
+        self.max_terms_per_topic = 200
+        self.no_top_terms_for_term_pairs = 30
         self.max_returned_term_pairs = 100
         self.sort_topics = True
 
@@ -331,7 +332,7 @@ class LDAModeling:
 
         print("========== PART 4 : Topic-term distribution ==========")
         ### Topic-Term Dist
-        topic_term_dist, topic_list = TextDistribution.topicTerm_dist(ldamodel, corpus2, sort_topics=self.sort_topics)
+        topic_term_dist, topic_list = TextDistribution.topicTerm_dist(ldamodel, corpus2, max_terms_per_topic=self.max_terms_per_topic, sort_topics=self.sort_topics)
         # print(topic_term_dist)
         # print("Topic list: {0}".format(topic_list))
 
@@ -363,7 +364,7 @@ class LDAModeling:
         self.localize_pyLDAvis_to_thai(project_name, output_dir, pyLDAvis_output_file, th_output_dir, th_pyLDAvis_output_file)
 
         print("========== PART 8 : Word/Term Pair Similairty==========")
-        terms_pairs = TextDistribution.compute_term_pairs_exp_max(topic_term_dist, self.no_top_terms, self.max_returned_term_pairs)
+        terms_pairs = TextDistribution.compute_term_pairs_exp_max(topic_term_dist, self.no_top_terms_for_term_pairs, self.max_returned_term_pairs)
         # print(terms_pairs)
 
 

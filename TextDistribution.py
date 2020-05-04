@@ -32,7 +32,7 @@ class TextDistribution:
     """
 
     @staticmethod
-    def topicTerm_dist(ldamodel, corpus, sort_topics=True):
+    def topicTerm_dist(ldamodel, corpus, max_terms_per_topic=1000, sort_topics=True):
         """
         Topic-Term Distribution is a probability score of word in topic which display on pyLDAvis output.
         This method is called 4 methods in class for calculating the probability that extend from pyLDAvis method, including:
@@ -82,7 +82,7 @@ class TextDistribution:
         term_proportion = term_frequency / term_frequency.sum()
         log_lift = np.log(topic_term_dists / term_proportion)
         log_ttd = np.log(topic_term_dists)
-        topic_term_dist = TextDistribution._find_relevance(topic_list, vocab, log_ttd, log_lift, 1000, lambda_=0.6)
+        topic_term_dist = TextDistribution._find_relevance(topic_list, vocab, log_ttd, log_lift, max_terms_per_topic, lambda_=0.6)
          
         return topic_term_dist, topic_list
     
@@ -164,41 +164,42 @@ class TextDistribution:
             return pd.Series(data, name=name)
 
     @staticmethod
-    def _find_relevance(topic_list, vocab,log_ttd, log_lift, R=1000, lambda_=0.6):
+    def _find_relevance(topic_list, vocab,log_ttd, log_lift, max_terms_per_topic, lambda_=0.6):
         """
         _find_relevance calculate a probability score of word in topic which display on pyLDAvis output and plus 
         return water mask in terms 
         
         """
         relevance = lambda_ * log_ttd + (1 - lambda_) * log_lift
-        id_ = relevance.T.apply(lambda s: s.sort_values(ascending=False).index).head(R)
-        relevance_ = relevance.T.apply(lambda s: s.sort_values(ascending=False).values).head(R)
+        id_ = relevance.T.apply(lambda s: s.sort_values(ascending=False).index).head(max_terms_per_topic)
+        relevance_ = relevance.T.apply(lambda s: s.sort_values(ascending=False).values).head(max_terms_per_topic)
 
         topic_term_dist = []
         x=1
         for num_topic in topic_list:
             term_list = []
+            # print("The number of word {0} in topic_id {1}".format(len(id_),num_topic))
             for num_term in range(len(id_)):
                 vocab_ = vocab[id_[num_topic][num_term]]
                 r_score =  relevance_[num_topic][num_term]
                 term = {"term":vocab_,
                         "score":r_score}
                 # ----- start water mask -----
-                if num_term in [177,288,399]:
+                if num_term in [166, 177, 188]:
                     score_next = relevance_[num_topic][num_term+1]
                     score_wm = ((r_score - score_next)/2)+score_next
-                    if num_term == 177:
+                    if num_term == 166:
                         term_name_wm = "คิมม"
-                    elif num_term == 288:
+                    elif num_term == 177:
                         term_name_wm = "มนน"
-                    elif num_term == 399:
+                    elif num_term == 188:
                         term_name_wm = "แซมม"
                     # append water mask
                     term_wm = {"term":term_name_wm,
                         "score":score_wm}
                     term_list.append(term_wm)
                 # delete last three words
-                if num_term not in [998,999,1000]:
+                if num_term not in [max_terms_per_topic-3, max_terms_per_topic-2, max_terms_per_topic-1]:
                     term_list.append(term)
                 # ----- end water mask -----
             # add topic-term to list
@@ -208,6 +209,7 @@ class TextDistribution:
             x+=1
             #print('-'*20)
         # print(topic_term_dist)
+        # print(len(topic_term_dist[1]['terms']))
         return topic_term_dist  
 
     @staticmethod
@@ -363,7 +365,7 @@ class TextDistribution:
 
     """
     @staticmethod
-    def compute_term_pairs_exp_max(topic_term_dist, no_top_terms=20, max_returned_term_pairs=-1):
+    def compute_term_pairs_exp_max(topic_term_dist, no_top_terms_for_term_pairs=50, max_returned_term_pairs=-1):
 
         term_pairs = []
         term_pairs_dict = defaultdict(dict)
@@ -386,13 +388,13 @@ class TextDistribution:
 
                         terms_1 = each_term_topic_1[
                             'terms']  # get a list of ranked terms, containing a dictionary {"term":"xxx", "score":0.12345}
-                        for i in range(min(len(terms_1), no_top_terms)):
+                        for i in range(min(len(terms_1), no_top_terms_for_term_pairs)):
                             term_1 = terms_1[i]
                             score_1 = term_1['score']
                             # print('topic id {0}, term {1}: "{2}": score={3}'.format(topic_no_1, i, term_1['term'], score_1))
 
                             terms_2 = each_term_topic_2['terms']
-                            for j in range(min(len(terms_2), no_top_terms)):
+                            for j in range(min(len(terms_2), no_top_terms_for_term_pairs)):
                                 term_2 = terms_2[j]
                                 score_2 = term_2['score']
 
