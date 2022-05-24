@@ -2,7 +2,7 @@ pythainlp==2.1.3
 stop_words
 pandas
 gensim
-tensorflow==1.14.0
+tensorflow==2.6.4
 keras
 deepcut
 pyldavis
